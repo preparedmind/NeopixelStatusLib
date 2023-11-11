@@ -7,6 +7,7 @@ NeoPixelStatus::NeoPixelStatus(int numPixels, int ledPin, neoPixelType type, int
   this->type = type;
   this->brightness = brightness;
 
+  this->currentBehavior = NULL;
   this->processingInterval = 200;
   this->lastMillis = millis();
 
@@ -28,7 +29,7 @@ void NeoPixelStatus::process()
     return;
   }
 
-  //if time the step has been executing is long enough - go to the next step
+  // if time the step has been executing is long enough - go to the next step
   if (this->lastMillis + this->processingInterval < millis())
   {
     int nextStepIndex = (this->currentStepIndex + 1) % (this->currentBehavior->numSteps);
@@ -46,6 +47,7 @@ void NeoPixelStatus::process()
         pixels->setPixelColor(i, pixels->Color(nextStep.r, nextStep.g, nextStep.b));
       }
     }
+    pixels->setBrightness(nextStep.brightness);
     pixels->show();
     
     this->processingInterval = nextStep.duration;
@@ -60,10 +62,12 @@ void NeoPixelStatus::setBehaviors(behavior_t behaviors[], int numBehaviors)
   {
     this->behaviors[i] = behaviors[i];
   }
+  
   for (int i = numBehaviors; i < MAX_BEHAVIORS; i++)
   {
     this->behaviors[i] = {};
   }
+  
   this->numBehaviors = numBehaviors;
 }
 
@@ -80,7 +84,7 @@ void NeoPixelStatus::startBehavior(String name)
   this->stopBehavior();
   for (int i = 0; i < this->numBehaviors; i++)
   {
-    if (this->behaviors[i].name == name)
+    if (this->behaviors[i].name.equals(name))
     {
       this->startBehavior(i);
       break;
